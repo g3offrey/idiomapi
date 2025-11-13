@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/g3offrey/idiomapi/internal/model"
+	"github.com/g3offrey/idiomapi/internal/dto"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +19,7 @@ func Recovery(logger *slog.Logger) gin.HandlerFunc {
 					"method", c.Request.Method,
 				)
 
-				c.AbortWithStatusJSON(http.StatusInternalServerError, model.ErrorResponse{
+				c.AbortWithStatusJSON(http.StatusInternalServerError, dto.ErrorResponse{
 					Error:   "internal_server_error",
 					Message: "An unexpected error occurred",
 				})

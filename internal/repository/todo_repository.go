@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/g3offrey/idiomapi/internal/dto"
 	"github.com/g3offrey/idiomapi/internal/model"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -26,7 +27,7 @@ func NewTodoRepository(pool *pgxpool.Pool) *TodoRepository {
 }
 
 // Create creates a new todo
-func (r *TodoRepository) Create(ctx context.Context, req model.CreateTodoRequest) (*model.Todo, error) {
+func (r *TodoRepository) Create(ctx context.Context, req dto.CreateTodoRequest) (*model.Todo, error) {
 	query := `
 		INSERT INTO todos (title, description, completed)
 		VALUES ($1, $2, $3)
@@ -158,7 +159,7 @@ func (r *TodoRepository) List(ctx context.Context, page, pageSize int, completed
 }
 
 // Update updates a todo
-func (r *TodoRepository) Update(ctx context.Context, id int, req model.UpdateTodoRequest) (*model.Todo, error) {
+func (r *TodoRepository) Update(ctx context.Context, id int, req dto.UpdateTodoRequest) (*model.Todo, error) {
 	// First check if todo exists
 	existing, err := r.GetByID(ctx, id)
 	if err != nil {

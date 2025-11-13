@@ -33,6 +33,12 @@ idiomapi/
 │   ├── database/        # Database connection and setup
 │   │   └── database.go
 │   │
+│   ├── dto/             # Data Transfer Objects (API contracts)
+│   │   ├── todo_dto.go
+│   │   ├── todo_dto_test.go
+│   │   ├── todo_mapper.go
+│   │   └── todo_mapper_test.go
+│   │
 │   ├── handler/         # HTTP request handlers
 │   │   ├── todo_handler.go
 │   │   ├── health_handler.go
@@ -42,7 +48,7 @@ idiomapi/
 │   │   ├── logger.go    # Request logging
 │   │   └── recovery.go  # Panic recovery
 │   │
-│   ├── model/           # Data models and DTOs
+│   ├── model/           # Domain models
 │   │   ├── todo.go
 │   │   └── todo_test.go
 │   │
@@ -83,13 +89,27 @@ idiomapi/
 
 ## Architecture Layers
 
-### 1. Handler Layer (`internal/handler/`)
+### 1. DTO Layer (`internal/dto/`)
+
+**Responsibility**: API contracts and data transformation
+
+- Define request/response structures
+- Separate API contracts from domain models
+- Transform between domain models and DTOs
+- API versioning support
+
+**Key Files**:
+- `todo_dto.go` - Request/Response DTOs
+- `todo_mapper.go` - Domain ↔ DTO transformations
+
+### 2. Handler Layer (`internal/handler/`)
 
 **Responsibility**: Handle HTTP requests and responses
 
 - Parse HTTP requests
 - Validate input data
 - Call service layer
+- Transform domain models to DTOs
 - Format HTTP responses
 - Handle HTTP-specific errors (4xx, 5xx)
 
@@ -97,7 +117,7 @@ idiomapi/
 - `todo_handler.go` - CRUD operations for todos
 - `health_handler.go` - Health check endpoint
 
-### 2. Service Layer (`internal/service/`)
+### 3. Service Layer (`internal/service/`)
 
 **Responsibility**: Business logic and orchestration
 
@@ -110,31 +130,30 @@ idiomapi/
 **Key Files**:
 - `todo_service.go` - Todo business logic
 
-### 3. Repository Layer (`internal/repository/`)
+### 4. Repository Layer (`internal/repository/`)
 
 **Responsibility**: Data access and persistence
 
 - Database queries
-- Data mapping
+- Data mapping between DB and domain models
 - Handle database-specific errors
 - Implement repository pattern
 
 **Key Files**:
 - `todo_repository.go` - Todo data access
 
-### 4. Model Layer (`internal/model/`)
+### 5. Model Layer (`internal/model/`)
 
-**Responsibility**: Data structures and DTOs
+**Responsibility**: Domain models
 
-- Define domain models
-- Request/Response DTOs
-- Validation tags
-- JSON serialization
+- Define core business entities
+- Business logic and rules
+- Independent of external concerns (DB, API)
 
 **Key Files**:
-- `todo.go` - Todo models and DTOs
+- `todo.go` - Todo domain model
 
-### 5. Middleware Layer (`internal/middleware/`)
+### 6. Middleware Layer (`internal/middleware/`)
 
 **Responsibility**: Cross-cutting concerns
 
@@ -150,27 +169,31 @@ idiomapi/
 ## Data Flow
 
 ```
-HTTP Request
+HTTP Request (JSON)
     ↓
 [Middleware] → Logging, Recovery
     ↓
-[Handler] → Parse request, validate
+[Handler] → Parse request into DTO
     ↓
-[Service] → Business logic
+[Handler] → Validate DTO
     ↓
-[Repository] → Database operations
+[Service] → Receive DTO, apply business logic
+    ↓
+[Repository] → Convert DTO to domain model, persist
     ↓
 [Database] → PostgreSQL
     ↓
-[Repository] → Map results
+[Repository] → Map DB results to domain model
     ↓
-[Service] → Process results
+[Service] → Return domain model
     ↓
-[Handler] → Format response
+[Handler] → Transform domain model to DTO
+    ↓
+[Handler] → Format DTO as JSON response
     ↓
 [Middleware] → Log response
     ↓
-HTTP Response
+HTTP Response (JSON)
 ```
 
 ## Design Patterns
@@ -194,9 +217,13 @@ HTTP Response
 - Reusable business operations
 
 ### 4. **DTO Pattern**
-- Separate internal models from API contracts
-- Version API independently
-- Validation at API boundary
+- Separate internal domain models from API contracts
+- DTOs define the API surface
+- Domain models represent business entities
+- Mappers transform between DTOs and domain models
+- API versioning without changing domain
+- Validation at API boundary (DTOs)
+- Independent evolution of API and domain
 
 ## Database Schema
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/g3offrey/idiomapi/internal/dto"
 	"github.com/g3offrey/idiomapi/internal/model"
 	"github.com/g3offrey/idiomapi/internal/repository"
 )
@@ -23,7 +24,7 @@ func NewTodoService(repo *repository.TodoRepository, logger *slog.Logger) *TodoS
 }
 
 // CreateTodo creates a new todo
-func (s *TodoService) CreateTodo(ctx context.Context, req model.CreateTodoRequest) (*model.Todo, error) {
+func (s *TodoService) CreateTodo(ctx context.Context, req dto.CreateTodoRequest) (*model.Todo, error) {
 	s.logger.Debug("creating todo", "title", req.Title)
 	todo, err := s.repo.Create(ctx, req)
 	if err != nil {
@@ -46,31 +47,20 @@ func (s *TodoService) GetTodo(ctx context.Context, id int) (*model.Todo, error) 
 }
 
 // ListTodos retrieves a paginated list of todos
-func (s *TodoService) ListTodos(ctx context.Context, page, pageSize int, completed *bool) (*model.TodoListResponse, error) {
+func (s *TodoService) ListTodos(ctx context.Context, page, pageSize int, completed *bool) ([]model.Todo, int, error) {
 	s.logger.Debug("listing todos", "page", page, "pageSize", pageSize)
 
 	todos, total, err := s.repo.List(ctx, page, pageSize, completed)
 	if err != nil {
 		s.logger.Error("failed to list todos", "error", err)
-		return nil, err
+		return nil, 0, err
 	}
 
-	totalPages := (total + pageSize - 1) / pageSize
-	if totalPages == 0 {
-		totalPages = 1
-	}
-
-	return &model.TodoListResponse{
-		Todos:      todos,
-		Total:      total,
-		Page:       page,
-		PageSize:   pageSize,
-		TotalPages: totalPages,
-	}, nil
+	return todos, total, nil
 }
 
 // UpdateTodo updates a todo
-func (s *TodoService) UpdateTodo(ctx context.Context, id int, req model.UpdateTodoRequest) (*model.Todo, error) {
+func (s *TodoService) UpdateTodo(ctx context.Context, id int, req dto.UpdateTodoRequest) (*model.Todo, error) {
 	s.logger.Debug("updating todo", "id", id)
 	todo, err := s.repo.Update(ctx, id, req)
 	if err != nil {

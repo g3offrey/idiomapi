@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/g3offrey/idiomapi/internal/model"
+	"github.com/g3offrey/idiomapi/internal/dto"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
@@ -44,15 +44,15 @@ func TestTodoHandlerValidation(t *testing.T) {
 
 	// Mock create handler with validation
 	router.POST("/api/v1/todos", func(c *gin.Context) {
-		var req model.CreateTodoRequest
+		var req dto.CreateTodoRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, model.ErrorResponse{
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 				Error:   "validation_error",
 				Message: err.Error(),
 			})
 			return
 		}
-		c.JSON(http.StatusCreated, model.Todo{
+		c.JSON(http.StatusCreated, dto.TodoResponse{
 			ID:    1,
 			Title: req.Title,
 		})
@@ -98,7 +98,7 @@ func TestTodoHandlerErrorResponses(t *testing.T) {
 	router := gin.New()
 
 	router.GET("/api/v1/todos/:id", func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, model.ErrorResponse{
+		c.JSON(http.StatusNotFound, dto.ErrorResponse{
 			Error:   "not_found",
 			Message: "Todo not found",
 		})
@@ -110,7 +110,7 @@ func TestTodoHandlerErrorResponses(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
-	var response model.ErrorResponse
+	var response dto.ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 	assert.Equal(t, "not_found", response.Error)

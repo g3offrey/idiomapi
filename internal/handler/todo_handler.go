@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/g3offrey/idiomapi/internal/model"
+	"github.com/g3offrey/idiomapi/internal/dto"
 	"github.com/g3offrey/idiomapi/internal/repository"
 	"github.com/g3offrey/idiomapi/internal/service"
 	"github.com/gin-gonic/gin"
@@ -23,9 +23,9 @@ func NewTodoHandler(service *service.TodoService) *TodoHandler {
 
 // CreateTodo handles POST /api/v1/todos
 func (h *TodoHandler) CreateTodo(c *gin.Context) {
-	var req model.CreateTodoRequest
+	var req dto.CreateTodoRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
 			Message: err.Error(),
 		})
@@ -34,21 +34,22 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 
 	todo, err := h.service.CreateTodo(c.Request.Context(), req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to create todo",
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, todo)
+	response := dto.ToTodoResponse(todo)
+	c.JSON(http.StatusCreated, response)
 }
 
 // GetTodo handles GET /api/v1/todos/:id
 func (h *TodoHandler) GetTodo(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "invalid_id",
 			Message: "Invalid todo ID",
 		})
@@ -58,20 +59,21 @@ func (h *TodoHandler) GetTodo(c *gin.Context) {
 	todo, err := h.service.GetTodo(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
 				Error:   "not_found",
 				Message: "Todo not found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to get todo",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, todo)
+	response := dto.ToTodoResponse(todo)
+	c.JSON(http.StatusOK, response)
 }
 
 // ListTodos handles GET /api/v1/todos
@@ -96,15 +98,16 @@ func (h *TodoHandler) ListTodos(c *gin.Context) {
 		completed = &completedVal
 	}
 
-	response, err := h.service.ListTodos(c.Request.Context(), page, pageSize, completed)
+	todos, total, err := h.service.ListTodos(c.Request.Context(), page, pageSize, completed)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to list todos",
 		})
 		return
 	}
 
+	response := dto.ToTodoListResponse(todos, total, page, pageSize)
 	c.JSON(http.StatusOK, response)
 }
 
@@ -112,16 +115,16 @@ func (h *TodoHandler) ListTodos(c *gin.Context) {
 func (h *TodoHandler) UpdateTodo(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "invalid_id",
 			Message: "Invalid todo ID",
 		})
 		return
 	}
 
-	var req model.UpdateTodoRequest
+	var req dto.UpdateTodoRequest
 	if bindErr := c.ShouldBindJSON(&req); bindErr != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "validation_error",
 			Message: bindErr.Error(),
 		})
@@ -131,27 +134,28 @@ func (h *TodoHandler) UpdateTodo(c *gin.Context) {
 	todo, err := h.service.UpdateTodo(c.Request.Context(), id, req)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
 				Error:   "not_found",
 				Message: "Todo not found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to update todo",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, todo)
+	response := dto.ToTodoResponse(todo)
+	c.JSON(http.StatusOK, response)
 }
 
 // DeleteTodo handles DELETE /api/v1/todos/:id
 func (h *TodoHandler) DeleteTodo(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, model.ErrorResponse{
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
 			Error:   "invalid_id",
 			Message: "Invalid todo ID",
 		})
@@ -161,13 +165,13 @@ func (h *TodoHandler) DeleteTodo(c *gin.Context) {
 	err = h.service.DeleteTodo(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			c.JSON(http.StatusNotFound, model.ErrorResponse{
+			c.JSON(http.StatusNotFound, dto.ErrorResponse{
 				Error:   "not_found",
 				Message: "Todo not found",
 			})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, model.ErrorResponse{
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Error:   "internal_error",
 			Message: "Failed to delete todo",
 		})
