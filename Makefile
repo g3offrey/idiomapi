@@ -89,14 +89,35 @@ vet:
 ## migrate-up: Run database migrations
 migrate-up:
 	@echo "$(CYAN)Running migrations...$(NC)"
-	@psql $(DB_DSN) -f migrations/001_create_todos_table.sql
+	@goose -dir migrations postgres $(DB_DSN) up
 	@echo "$(GREEN)Migrations complete$(NC)"
 
-## migrate-down: Rollback database migrations
+## migrate-down: Rollback last migration
 migrate-down:
-	@echo "$(CYAN)Rolling back migrations...$(NC)"
-	@psql $(DB_DSN) -c "DROP TABLE IF EXISTS todos CASCADE;"
+	@echo "$(CYAN)Rolling back last migration...$(NC)"
+	@goose -dir migrations postgres $(DB_DSN) down
 	@echo "$(GREEN)Rollback complete$(NC)"
+
+## migrate-reset: Reset all migrations
+migrate-reset:
+	@echo "$(CYAN)Resetting all migrations...$(NC)"
+	@goose -dir migrations postgres $(DB_DSN) reset
+	@echo "$(GREEN)Reset complete$(NC)"
+
+## migrate-status: Show migration status
+migrate-status:
+	@echo "$(CYAN)Migration status:$(NC)"
+	@goose -dir migrations postgres $(DB_DSN) status
+
+## migrate-create: Create a new migration (usage: make migrate-create NAME=migration_name)
+migrate-create:
+	@if [ -z "$(NAME)" ]; then \
+		echo "$(RED)Error: NAME is required. Usage: make migrate-create NAME=migration_name$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(CYAN)Creating migration $(NAME)...$(NC)"
+	@goose -dir migrations create $(NAME) sql
+	@echo "$(GREEN)Migration created$(NC)"
 
 ## db-create: Create database
 db-create:
@@ -131,6 +152,7 @@ install-tools:
 	@echo "$(CYAN)Installing tools...$(NC)"
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	@go install golang.org/x/tools/cmd/goimports@latest
+	@go install github.com/pressly/goose/v3/cmd/goose@latest
 	@echo "$(GREEN)Tools installed$(NC)"
 
 ## install-hooks: Install git hooks

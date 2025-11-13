@@ -259,6 +259,8 @@ This will:
 
 ## Database Migrations
 
+This project uses [goose](https://github.com/pressly/goose) for database migrations.
+
 Create the database:
 ```bash
 make db-create
@@ -269,9 +271,24 @@ Run migrations:
 make migrate-up
 ```
 
-Rollback migrations:
+Rollback last migration:
 ```bash
 make migrate-down
+```
+
+Reset all migrations:
+```bash
+make migrate-reset
+```
+
+Check migration status:
+```bash
+make migrate-status
+```
+
+Create a new migration:
+```bash
+make migrate-create NAME=add_users_table
 ```
 
 Drop the database:

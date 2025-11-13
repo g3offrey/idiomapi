@@ -1,3 +1,5 @@
+-- +goose Up
+-- +goose StatementBegin
 -- Create todos table
 CREATE TABLE IF NOT EXISTS todos (
     id SERIAL PRIMARY KEY,
@@ -28,3 +30,20 @@ CREATE TRIGGER update_todos_updated_at
     BEFORE UPDATE ON todos
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+-- Drop trigger
+DROP TRIGGER IF EXISTS update_todos_updated_at ON todos;
+
+-- Drop function
+DROP FUNCTION IF EXISTS update_updated_at_column();
+
+-- Drop indexes
+DROP INDEX IF EXISTS idx_todos_created_at;
+DROP INDEX IF EXISTS idx_todos_completed;
+
+-- Drop table
+DROP TABLE IF EXISTS todos;
+-- +goose StatementEnd

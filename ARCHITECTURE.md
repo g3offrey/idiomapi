@@ -12,6 +12,7 @@ This is an enterprise-ready REST API for a TODO application built following Go b
 | **Web Framework** | Gin | High-performance HTTP web framework |
 | **Database Driver** | pgx/v5 | Pure Go PostgreSQL driver with connection pooling |
 | **Database** | PostgreSQL 12+ | Reliable, ACID-compliant relational database |
+| **Migrations** | goose | Database schema version control |
 | **Configuration** | cleanenv | TOML/YAML/ENV configuration management |
 | **Logging** | slog | Structured logging (Go 1.21+ standard library) |
 | **Testing** | testify/assert | Rich assertion library for testing |
