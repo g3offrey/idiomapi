@@ -2,11 +2,6 @@ run:
   timeout: 5m
   tests: true
 
-issues:
-  exclude-dirs:
-    - vendor
-    - tmp
-
 linters:
   enable:
     - errcheck
@@ -24,7 +19,6 @@ linters:
     - unparam
     - gocritic
     - prealloc
-    - shadow
 
 linters-settings:
   errcheck:
